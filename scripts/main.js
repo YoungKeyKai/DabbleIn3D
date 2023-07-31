@@ -1,83 +1,123 @@
-// Angles will ALL mean counterclockwise direction (like in maths)
-
-function degToRad(degrees) {
-    return degrees * Math.PI / 180
-}
-
-function createPoint(x, y) {
+let createPoint = (x, y) => {
     return {x, y}
 }
 
-function createLine(x1, y1, x2, y2) {
-    return {start: createPoint(x1, y1), end: createPoint(x2, y2)}
+let createLine = (startingPoint, endingPoint) => {
+    return {startingPoint, endingPoint}
 }
 
-function drawRectangle(context, start, end, fill=true, colour='white') {
-    if (fill) {
-        context.fillStyle = colour
-        context.fillRect(start.x, start.y, end.x, end.y)
-    } else {
-        context.strokeStyle = colour
-        context.strokeRect(start.x, start.y, end.x, end.y)
+let createRectangle = (topLeftPoint, bottomRightPoint) => {
+    return {topLeftPoint, bottomRightPoint}
+}
+
+let createCircle = (center, radius) => {
+    return {center, radius}
+}
+
+class Canvas {
+    constructor(canvasSelector) {
+        if (Canvas._instance !== undefined) {
+            return Canvas._instance
+        }
+
+        this.canvas = document.querySelector(canvasSelector)
+        this.context = this.canvas.getContext('2d')
+        this.width = this.canvas.width
+        this.height = this.canvas.height
+
+        Canvas._instance = this
     }
-}
-
-function drawCircle(context, center, radius, fill=true, colour='white') {
-    let circle = new Path2D()
-    circle.arc(center.x, center.y, radius, 0, 2 * Math.PI, true)
-
-    context.fillStyle = colour
-    context.strokeStyle = colour
-
-    if (fill) {
-        context.fill(circle)
-    } else {
-        context.stroke(circle)
-    }
-}
-
-function drawLine(context, line, colour='white') {
-    context.beginPath()
-    context.moveTo(line.start.x, line.start.y)
-    context.lineTo(line.end.x, line.end.y)
-
-    context.strokeStyle = colour
-    context.stroke()
-}
-
-function fillCanvas(canvas, context, colour='black') {
-    drawRectangle(context, createPoint(0, 0), createPoint(canvas.width, canvas.height), fill=true, colour=colour)
-}
-
-function get2DCanvas() {
-    let canvas = document.querySelector('#canvas2d')
-    return [canvas, canvas.getContext('2d')]
-}
-
-function rayCast2D() {
-    [canvas2D, context2D] = get2DCanvas()
-    fillCanvas(canvas2D, context2D)
     
-    let playerPosition = createPoint(canvas2D.width / 2, canvas2D.height / 2)
-    drawCircle(context2D, playerPosition, 2)
-    
-    let facingDirection = 0 // Degrees
-    let fovAngle = 100 // Degrees
-    let rayMaxDistance = 100
-    let rayCount = 50
+    drawRectangle(rectangle, fill=true, colour='white') {
+        this.context.fillStyle = colour
+        this.context.strokeStyle = colour
 
-    let rays = new Array(rayCount).fill(0)
-    let startFOVAngle = facingDirection - fovAngle / 2
-    let angleStep = fovAngle / rayCount
-    for (let i = 0; i < rayCount; i++) {
-        let angleRad = degToRad(startFOVAngle + i * angleStep)
-        let deltaX = rayMaxDistance * Math.cos(angleRad)
-        let deltaY = rayMaxDistance * Math.sin(angleRad)
-
-        rays[i] = createLine(playerPosition.x, playerPosition.y, playerPosition.x + deltaX, playerPosition.y + deltaY)
+        if (fill) {
+            this.context.fillRect(
+                rectangle.topLeftPoint.x,
+                rectangle.topLeftPoint.y,
+                rectangle.bottomRightPoint.x,
+                rectangle.bottomRightPoint.y
+            )
+        } else {
+            this.context.strokeRect(
+                rectangle.topLeftPoint.x,
+                rectangle.topLeftPoint.y,
+                rectangle.bottomRightPoint.x,
+                rectangle.bottomRightPoint.y
+            )
+        }
     }
-
-    rays.forEach((line) => drawLine(context2D, line))
+    
+    drawCircle(circle, fill=true, colour='white') {
+        let circlePath = new Path2D().arc(circle.center.x, circle.center.y, circle.radius, 0, 2 * Math.PI, true)
+    
+        this.context.fillStyle = colour
+        this.context.strokeStyle = colour
+    
+        if (fill) {
+            this.context.fill(circlePath)
+        } else {
+            this.context.stroke(circlePath)
+        }
+    }
+    
+    drawLine(line, colour='white') {
+        this.context.beginPath()
+        this.context.moveTo(line.startingPoint.x, line.startingPoint.y)
+        this.context.lineTo(line.endingPoint.x, line.endingPoint.y)
+    
+        this.context.strokeStyle = colour
+        this.context.stroke()
+    }
+    
+    fillCanvas(colour='black') {
+        this.drawRectangle(
+            createRectangle(createPoint(0, 0), createPoint(this.width, this.height)),
+            true,
+            colour
+        )
+    }
 }
 
-rayCast2D()
+class Raycast2D {
+    constructor(canvasSelector) {
+        this.canvas = new Canvas(canvasSelector)
+
+        this.facingDirectionDegrees = 0
+        this.fovAngleDegrees = 100
+        this.rayMaxDistance = 100
+        this.rayCount = 50
+
+        this.playerPosition = createPoint(this.canvas.width / 2, this.canvas.height / 2)
+
+        this.rayEndPoints = new Array(this.rayCount).fill(0)
+        this.updateRays()
+    }
+
+    degreeToRadian(degrees) {
+        return degrees * Math.PI / 180
+    }
+
+    updateRays() {
+        let startingFOVAngle = this.facingDirectionDegrees - this.fovAngleDegrees / 2
+        let angleStep = this.fovAngleDegrees / this.rayCount
+        
+        for (let rayIndex = 0; rayIndex < this.rayCount; rayIndex++) {
+            let angleRadians = this.degreeToRadian(startingFOVAngle + rayIndex * angleStep)
+            let deltaX = this.rayMaxDistance * Math.cos(angleRadians)
+            let deltaY = this.rayMaxDistance * Math.sin(angleRadians)
+            this.rayEndPoints[rayIndex] = createPoint(this.playerPosition.x + deltaX, this.playerPosition.y + deltaY)
+        }
+    }
+    
+    drawVisuals() {
+        this.canvas.fillCanvas()
+        this.canvas.drawCircle(createCircle(this.playerPosition, 2))
+        this.rayEndPoints.forEach((rayEndPoint) => this.canvas.drawLine(createLine(this.playerPosition, rayEndPoint)))
+    }
+    
+}
+
+const raycast2D = new Raycast2D('#canvas2d')
+raycast2D.drawVisuals()
