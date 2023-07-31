@@ -94,6 +94,8 @@ class Raycast2D {
 
         this.playerPosition = createPoint(this.canvas.width / 2, this.canvas.height / 2)
 
+        this.walls = [createLine(createPoint(270, 100), createPoint(400, 250)),]
+
         this.rayEndPoints = new Array(this.rayCount).fill(0)
         this.updateRays()
     }
@@ -114,8 +116,8 @@ class Raycast2D {
         this.canvas.fillCanvas()
         this.canvas.drawCircle(createCircle(this.playerPosition, 2))
         this.rayEndPoints.forEach((rayEndPoint) => this.canvas.drawLine(createLine(this.playerPosition, rayEndPoint)))
+        this.walls.forEach((wall) => this.canvas.drawLine(wall))
     }
-    
 }
 
 const raycast2D = new Raycast2D('#canvas2d')
