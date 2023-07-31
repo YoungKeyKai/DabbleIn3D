@@ -40,6 +40,18 @@ let createCircle = (center, radius) => {
     return {center, radius}
 }
 
+/**
+ * Commentary: 
+ * Initially, I tried to use the orientation method described at
+ * https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/.
+ * However, it required the points to be ordered in a specific manner,
+ * and checking the slopes resulted in problems with vertical lines.
+ * Moreover, the implementation was significantly more involved and complex.
+ * Therefore, the current method of solving a system of equations described by
+ * the two lines' vector parametric equations was found and used instead.
+ * It solved both prior issues and is easier to implement, only needing
+ * some pen-and-paper equation solving to get a result that is largely universal.
+ */
 let intersectionPointOfLines = (line1, line2) => {
     let deltaX1 = line1.endingPoint.x - line1.startingPoint.x
     let deltaY1 = line1.endingPoint.y - line1.startingPoint.y
@@ -50,6 +62,7 @@ let intersectionPointOfLines = (line1, line2) => {
     let line2DirectionVectorParameterDenominator = deltaX2 * deltaY1 - deltaY2 * deltaX1
     let line1DirectionVectorParameterDenominator = deltaX1
     if (line1DirectionVectorParameterDenominator === 0 || line2DirectionVectorParameterDenominator === 0) {
+        // TODO: deal with colinear lines (find whether they overlap and if yes, the starting point of the overlap)
         return undefined // Colinear
     }
     
