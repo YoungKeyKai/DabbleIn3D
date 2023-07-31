@@ -6,8 +6,31 @@ let createPoint = (x, y) => {
 }
 
 let createLine = (startingPoint, endingPoint) => {
-    return {startingPoint, endingPoint}
+    if (startingPoint.x === endingPoint.x && startingPoint.y === endingPoint.y) {
+        throw Error('Starting and ending points of a line must be different.')
+    }
+
+    let isVertical = false, isHorizontal = false
+
+    if (startingPoint.x === endingPoint.x) {
+        isVertical = true
+    } else if (startingPoint.y === endingPoint.y) {
+        isHorizontal = true
+    }
+
+    return {startingPoint, endingPoint, isVertical, isHorizontal}
 }
+
+let slopeAndYInterceptOfLine = (line) => {
+    let slope = (line.endingPoint.y - line.startingPoint.y) / (line.endingPoint.x - line.startingPoint.x)
+    let yIntercept = line.endingPoint.y - slope * line.endingPoint.x
+
+    return {slope, yIntercept}
+}
+
+let lengthOfLine = (line) => Math.sqrt(
+    (line.endingPoint.x - line.startingPoint.x) ** 2 + (line.endingPoint.y - line.startingPoint.y) ** 2
+)
 
 let createRectangle = (topLeftPoint, bottomRightPoint) => {
     return {topLeftPoint, bottomRightPoint}
@@ -15,6 +38,43 @@ let createRectangle = (topLeftPoint, bottomRightPoint) => {
 
 let createCircle = (center, radius) => {
     return {center, radius}
+}
+
+let intersectionPointOfLines = (line1, line2) => {
+    let deltaX1 = line1.endingPoint.x - line1.startingPoint.x
+    let deltaY1 = line1.endingPoint.y - line1.startingPoint.y
+
+    let deltaX2 = line2.endingPoint.x - line2.startingPoint.x
+    let deltaY2 = line2.endingPoint.y - line2.startingPoint.y
+
+    let line2DirectionVectorParameterDenominator = deltaX2 * deltaY1 - deltaY2 * deltaX1
+    let line1DirectionVectorParameterDenominator = deltaX1
+    if (line1DirectionVectorParameterDenominator === 0 || line2DirectionVectorParameterDenominator === 0) {
+        return undefined // Colinear
+    }
+    
+    let differenceBetweenStartingPointX = line2.startingPoint.x - line1.startingPoint.x
+    let differenceBetweenStartingPointY = line2.startingPoint.y - line1.startingPoint.y
+    let line2DirectionVectorParameter = (
+        (deltaX1 * differenceBetweenStartingPointY - deltaY1 * differenceBetweenStartingPointX) /
+        line2DirectionVectorParameterDenominator
+    )
+    let line1DirectionVectorParameter = (
+        (line2DirectionVectorParameter * deltaX2 + differenceBetweenStartingPointX) /
+        line1DirectionVectorParameterDenominator
+    )
+
+    if (
+        (line1DirectionVectorParameter < 0 || line1DirectionVectorParameter > 1) ||
+        (line2DirectionVectorParameter < 0 || line2DirectionVectorParameter > 1) 
+    ) {
+        return false
+    }
+
+    let intersectionX = line1.startingPoint.x + line1DirectionVectorParameter * deltaX1
+    let intersectionY = line1.startingPoint.y + line1DirectionVectorParameter * deltaY1
+
+    return createPoint(intersectionX, intersectionY)
 }
 
 class Canvas {
@@ -105,10 +165,29 @@ class Raycast2D {
         let angleStep = this.fovAngleDegrees / this.rayCount
         
         for (let rayIndex = 0; rayIndex < this.rayCount; rayIndex++) {
-            let angleRadians = degreeToRadian(startingFOVAngle + rayIndex * angleStep)
-            let deltaX = this.rayMaxDistance * Math.cos(angleRadians)
-            let deltaY = this.rayMaxDistance * Math.sin(angleRadians)
-            this.rayEndPoints[rayIndex] = createPoint(this.playerPosition.x + deltaX, this.playerPosition.y + deltaY)
+            let rayAngleInRadians = degreeToRadian(startingFOVAngle + rayIndex * angleStep)
+            let maximumDeltaX = this.rayMaxDistance * Math.cos(rayAngleInRadians)
+            let maximumDeltaY = this.rayMaxDistance * Math.sin(rayAngleInRadians)
+
+            let shortestRayEndPoint = createPoint(this.playerPosition.x + maximumDeltaX, this.playerPosition.y + maximumDeltaY)
+            let shortestRayLength = this.rayMaxDistance
+
+            for (let wallIndex = 0; wallIndex < this.walls.length; wallIndex++) {
+                let rayLine = createLine(this.playerPosition, shortestRayEndPoint)
+                let intersectionPointBetweenRayAndWall = intersectionPointOfLines(rayLine, this.walls[wallIndex])
+
+                if (!intersectionPointBetweenRayAndWall) {
+                    continue
+                }
+
+                let rayToIntersectionLength = lengthOfLine(createLine(this.playerPosition, intersectionPointBetweenRayAndWall))
+                if (rayToIntersectionLength < shortestRayLength) {
+                    shortestRayEndPoint = intersectionPointBetweenRayAndWall
+                    shortestRayLength = rayToIntersectionLength
+                }
+            }
+
+            this.rayEndPoints[rayIndex] = shortestRayEndPoint
         }
     }
     
