@@ -1,3 +1,6 @@
+let degreeToRadian = (degrees) => degrees * Math.PI / 180
+let radianToDegree = (radians) => radians * 180 / Math.PI
+
 let createPoint = (x, y) => {
     return {x, y}
 }
@@ -95,16 +98,12 @@ class Raycast2D {
         this.updateRays()
     }
 
-    degreeToRadian(degrees) {
-        return degrees * Math.PI / 180
-    }
-
     updateRays() {
         let startingFOVAngle = this.facingDirectionDegrees - this.fovAngleDegrees / 2
         let angleStep = this.fovAngleDegrees / this.rayCount
         
         for (let rayIndex = 0; rayIndex < this.rayCount; rayIndex++) {
-            let angleRadians = this.degreeToRadian(startingFOVAngle + rayIndex * angleStep)
+            let angleRadians = degreeToRadian(startingFOVAngle + rayIndex * angleStep)
             let deltaX = this.rayMaxDistance * Math.cos(angleRadians)
             let deltaY = this.rayMaxDistance * Math.sin(angleRadians)
             this.rayEndPoints[rayIndex] = createPoint(this.playerPosition.x + deltaX, this.playerPosition.y + deltaY)
