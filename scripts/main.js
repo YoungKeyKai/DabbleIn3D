@@ -154,6 +154,10 @@ class Canvas {
             colour
         )
     }
+
+    addEventListener(event, func) {
+        this.canvas.addEventListener(event, func)
+    }
 }
 
 class Raycast2D {
@@ -164,6 +168,8 @@ class Raycast2D {
         this.fovAngleDegrees = 100
         this.rayMaxDistance = 100
         this.rayCount = 50
+        this.playerStepSize = 2
+        this.playerTurnRate = 5
 
         this.playerPosition = createPoint(this.canvas.width / 2, this.canvas.height / 2)
 
@@ -171,6 +177,9 @@ class Raycast2D {
 
         this.rayEndPoints = new Array(this.rayCount).fill(0)
         this.updateRays()
+        this.drawVisuals()
+        
+        this.canvas.addEventListener("keydown", (event) => {this.update(event)});
     }
 
     updateRays() {
@@ -210,7 +219,35 @@ class Raycast2D {
         this.rayEndPoints.forEach((rayEndPoint) => this.canvas.drawLine(createLine(this.playerPosition, rayEndPoint)))
         this.walls.forEach((wall) => this.canvas.drawLine(wall))
     }
+
+    update(event) {
+        if (event.isComposing || event.keyCode === 229) {
+            return;
+        }
+
+        if (event.key === 'w') {
+            this.playerPosition.y -= this.playerStepSize
+        }
+        if (event.key === 'a') {
+            this.playerPosition.x -= this.playerStepSize
+        }
+        if (event.key === 's') {
+            this.playerPosition.y += this.playerStepSize
+        }
+        if (event.key === 'd') {
+            this.playerPosition.x += this.playerStepSize
+        }
+
+        if (event.key === 'q') {
+            this.facingDirectionDegrees -= this.playerTurnRate
+        }
+        if (event.key === 'e') {
+            this.facingDirectionDegrees += this.playerTurnRate
+        }
+
+        this.updateRays()
+        this.drawVisuals()
+    }
 }
 
 const raycast2D = new Raycast2D('#canvas2d')
-raycast2D.drawVisuals()
