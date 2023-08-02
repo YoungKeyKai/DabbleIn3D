@@ -9,23 +9,7 @@ let createLine = (startingPoint, endingPoint) => {
     if (startingPoint.x === endingPoint.x && startingPoint.y === endingPoint.y) {
         throw Error('Starting and ending points of a line must be different.')
     }
-
-    let isVertical = false, isHorizontal = false
-
-    if (startingPoint.x === endingPoint.x) {
-        isVertical = true
-    } else if (startingPoint.y === endingPoint.y) {
-        isHorizontal = true
-    }
-
-    return {startingPoint, endingPoint, isVertical, isHorizontal}
-}
-
-let slopeAndYInterceptOfLine = (line) => {
-    let slope = (line.endingPoint.y - line.startingPoint.y) / (line.endingPoint.x - line.startingPoint.x)
-    let yIntercept = line.endingPoint.y - slope * line.endingPoint.x
-
-    return {slope, yIntercept}
+    return {startingPoint, endingPoint}
 }
 
 let lengthOfLine = (line) => Math.sqrt(
