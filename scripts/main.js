@@ -228,24 +228,53 @@ class Raycast2D {
             return;
         }
 
-        if (event.key === 'w') {
-            this.playerPosition.y -= this.playerStepSize
-        }
-        if (event.key === 'a') {
-            this.playerPosition.x -= this.playerStepSize
-        }
-        if (event.key === 's') {
-            this.playerPosition.y += this.playerStepSize
-        }
-        if (event.key === 'd') {
-            this.playerPosition.x += this.playerStepSize
+        if (!'wasdqe'.includes(event.key)) {
+            return
         }
 
-        if (event.key === 'q') {
-            this.facingDirectionDegrees -= this.playerTurnRate
+        if ('wasd'.includes(event.key)) {
+            switch(event.key) {
+                case 'w':
+                    this.playerPosition.y -= this.playerStepSize
+                    break
+                case 'a':
+                    this.playerPosition.x -= this.playerStepSize
+                    break
+                case 's':
+                    this.playerPosition.y += this.playerStepSize
+                    break
+                case 'd':
+                    this.playerPosition.x += this.playerStepSize
+                    break
+                default:
+                    break
+            }
+
+            if (this.playerPosition.x < 0) {
+                this.playerPosition.x = 0
+            } else if (this.playerPosition.x > this.canvas.width) {
+                this.playerPosition.x = this.canvas.width
+            }
+
+            if (this.playerPosition.y < 0) {
+                this.playerPosition.y = 0
+            } else if (this.playerPosition.y > this.canvas.height) {
+                this.playerPosition.y = this.canvas.height
+            }
         }
-        if (event.key === 'e') {
-            this.facingDirectionDegrees += this.playerTurnRate
+        
+        else {
+            switch(event.key) {
+                case 'q':
+                    this.facingDirectionDegrees -= this.playerTurnRate
+                    break
+                case 'e':
+                    this.facingDirectionDegrees += this.playerTurnRate
+                    break
+                default:
+                    break
+            }
+            this.facingDirectionDegrees %= 360
         }
 
         this.updateRays()
