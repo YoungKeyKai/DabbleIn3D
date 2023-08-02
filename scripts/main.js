@@ -59,23 +59,42 @@ let intersectionPointOfLines = (line1, line2) => {
     let deltaX2 = line2.endingPoint.x - line2.startingPoint.x
     let deltaY2 = line2.endingPoint.y - line2.startingPoint.y
 
-    let line2DirectionVectorParameterDenominator = deltaX2 * deltaY1 - deltaY2 * deltaX1
-    let line1DirectionVectorParameterDenominator = deltaX1
-    if (line1DirectionVectorParameterDenominator === 0 || line2DirectionVectorParameterDenominator === 0) {
-        // TODO: deal with colinear lines (find whether they overlap and if yes, the starting point of the overlap)
-        return undefined // Colinear
-    }
-    
     let differenceBetweenStartingPointX = line2.startingPoint.x - line1.startingPoint.x
     let differenceBetweenStartingPointY = line2.startingPoint.y - line1.startingPoint.y
-    let line2DirectionVectorParameter = (
-        (deltaX1 * differenceBetweenStartingPointY - deltaY1 * differenceBetweenStartingPointX) /
-        line2DirectionVectorParameterDenominator
-    )
-    let line1DirectionVectorParameter = (
-        (line2DirectionVectorParameter * deltaX2 + differenceBetweenStartingPointX) /
-        line1DirectionVectorParameterDenominator
-    )
+
+    let line1DirectionVectorParameter = -1, line2DirectionVectorParameter = -1
+
+    if (deltaX1 === 0) {
+        if (deltaX2 === 0) {
+            // Both lines are vertical, either parallel or colinear
+            return undefined
+        }
+
+        line2DirectionVectorParameter = (
+            -differenceBetweenStartingPointX /
+            deltaX2
+        )
+        line1DirectionVectorParameter = (
+            (line2DirectionVectorParameter * deltaY2 + differenceBetweenStartingPointY) /
+            deltaY1
+        )
+    } else {
+        let line2DirectionVectorParameterDenominator = deltaX2 * deltaY1 - deltaY2 * deltaX1
+    
+        if (line2DirectionVectorParameterDenominator === 0) {
+            // Both lines are horizontal, either parallel or colinear
+            return undefined // Colinear
+        }
+        
+        line2DirectionVectorParameter = (
+            (deltaX1 * differenceBetweenStartingPointY - deltaY1 * differenceBetweenStartingPointX) /
+            line2DirectionVectorParameterDenominator
+        )
+        line1DirectionVectorParameter = (
+            (line2DirectionVectorParameter * deltaX2 + differenceBetweenStartingPointX) /
+            deltaX1
+        )
+    }
 
     if (
         (line1DirectionVectorParameter < 0 || line1DirectionVectorParameter > 1) ||
