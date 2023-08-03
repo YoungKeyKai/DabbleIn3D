@@ -174,12 +174,14 @@ class Raycast2D {
         this.playerPosition = createPoint(this.canvas.width / 2, this.canvas.height / 2)
 
         this.walls = [createLine(createPoint(270, 100), createPoint(400, 250)),]
+        this.wallStartCoordinate = undefined
 
         this.rayEndPoints = new Array(this.rayCount).fill(0)
         this.updateRays()
         this.drawVisuals()
         
-        this.canvas.addEventListener("keydown", (event) => {this.update(event)});
+        this.canvas.addEventListener("keydown", (event) => {this.movePlayer(event)});
+        this.canvas.addEventListener("mousedown", (event) => {this.addWall(event)})
     }
 
     updateRays() {
@@ -223,7 +225,18 @@ class Raycast2D {
         this.walls.forEach((wall) => this.canvas.drawLine(wall))
     }
 
-    update(event) {
+    addWall(event) {
+        if (this.wallStartCoordinate === undefined) {
+            this.wallStartCoordinate = createPoint(event.clientX, event.clientY)
+        } else {
+            let wallEndCoordinates = createPoint(event.clientX, event.clientY)
+            this.walls.push(createLine(this.wallStartCoordinate, wallEndCoordinates))
+            this.wallStartCoordinate = undefined
+            this.update()
+        }
+    }
+
+    movePlayer(event) {
         if (event.isComposing || event.keyCode === 229) {
             return;
         }
@@ -277,6 +290,10 @@ class Raycast2D {
             this.facingDirectionDegrees %= 360
         }
 
+        this.update()
+    }
+
+    update() {
         this.updateRays()
         this.drawVisuals()
     }
