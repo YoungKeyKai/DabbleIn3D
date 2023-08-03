@@ -6,9 +6,6 @@ let createPoint = (x, y) => {
 }
 
 let createLine = (startingPoint, endingPoint) => {
-    if (startingPoint.x === endingPoint.x && startingPoint.y === endingPoint.y) {
-        throw Error('Starting and ending points of a line must be different.')
-    }
     return {startingPoint, endingPoint}
 }
 
@@ -209,6 +206,9 @@ class Raycast2D {
                 if (rayToIntersectionLength < shortestRayLength) {
                     shortestRayEndPoint = intersectionPointBetweenRayAndWall
                     shortestRayLength = rayToIntersectionLength
+                }
+                if (rayToIntersectionLength === 0) {
+                    break
                 }
             }
 
