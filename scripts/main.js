@@ -32,50 +32,36 @@ let createCircle = (center, radius) => {
  * the two lines' vector parametric equations was found and used instead.
  * It solved both prior issues and is easier to implement, only needing
  * some pen-and-paper equation solving to get a result that is largely universal.
+ * 
+ * Commentary 2:
+ * Okay, using a pure matrix mathematical calculation is definitely easier
+ * and simpler than solving the equations thru the traditional algebraic method.
+ * It also fixed a problem where vertical lines would clip into walls because
+ * it was detecting it as colinear to walls even when it's actually not.
+ * The last calculation of the (x,y) coords of the intersection is basically
+ * that we are cutting a fraction of the line starting from the starting point
+ * where the fraction is given by what I call in the code as the "vector parameter".
+ * https://blogs.sas.com/content/iml/2018/07/09/intersection-line-segments.html
  */
 let intersectionPointOfLines = (line1, line2) => {
-    let deltaX1 = line1.endingPoint.x - line1.startingPoint.x
-    let deltaY1 = line1.endingPoint.y - line1.startingPoint.y
-
-    let deltaX2 = line2.endingPoint.x - line2.startingPoint.x
-    let deltaY2 = line2.endingPoint.y - line2.startingPoint.y
-
-    let differenceBetweenStartingPointX = line2.startingPoint.x - line1.startingPoint.x
-    let differenceBetweenStartingPointY = line2.startingPoint.y - line1.startingPoint.y
-
-    let line1DirectionVectorParameter = -1, line2DirectionVectorParameter = -1
-
-    if (deltaX1 === 0) {
-        if (deltaX2 === 0) {
-            // Both lines are vertical, either parallel or colinear
-            return undefined
-        }
-
-        line2DirectionVectorParameter = (
-            -differenceBetweenStartingPointX /
-            deltaX2
-        )
-        line1DirectionVectorParameter = (
-            (line2DirectionVectorParameter * deltaY2 + differenceBetweenStartingPointY) /
-            deltaY1
-        )
-    } else {
-        let line2DirectionVectorParameterDenominator = deltaX2 * deltaY1 - deltaY2 * deltaX1
+    let endXMinusStartXLine1 = line1.endingPoint.x - line1.startingPoint.x
+    let endYMinusStartYLine1 = line1.endingPoint.y - line1.startingPoint.y
     
-        if (line2DirectionVectorParameterDenominator === 0) {
-            // Both lines are horizontal, either parallel or colinear
-            return undefined // Colinear
-        }
-        
-        line2DirectionVectorParameter = (
-            (deltaX1 * differenceBetweenStartingPointY - deltaY1 * differenceBetweenStartingPointX) /
-            line2DirectionVectorParameterDenominator
-        )
-        line1DirectionVectorParameter = (
-            (line2DirectionVectorParameter * deltaX2 + differenceBetweenStartingPointX) /
-            deltaX1
-        )
+    let startXMinusEndXLine2 = line2.startingPoint.x - line2.endingPoint.x
+    let startYMinusEndYLine2 = line2.startingPoint.y - line2.endingPoint.y
+
+    let differenceInOriginsX = line2.startingPoint.x - line1.startingPoint.x
+    let differenceInOriginsY = line2.startingPoint.y - line1.startingPoint.y
+
+    let determinant = endXMinusStartXLine1*startYMinusEndYLine2 - startXMinusEndXLine2*endYMinusStartYLine1
+
+    if (determinant === 0) {
+        // Matrix of x1,y1,x2,y2 is not invertible (i.e., it is singular)
+        return undefined
     }
+
+    let line1DirectionVectorParameter = (1/determinant) * (startYMinusEndYLine2*differenceInOriginsX - startXMinusEndXLine2*differenceInOriginsY)
+    let line2DirectionVectorParameter = (1/determinant) * (-endYMinusStartYLine1*differenceInOriginsX + endXMinusStartXLine1*differenceInOriginsY)
 
     if (
         (line1DirectionVectorParameter < 0 || line1DirectionVectorParameter > 1) ||
@@ -84,8 +70,8 @@ let intersectionPointOfLines = (line1, line2) => {
         return false
     }
 
-    let intersectionX = line1.startingPoint.x + line1DirectionVectorParameter * deltaX1
-    let intersectionY = line1.startingPoint.y + line1DirectionVectorParameter * deltaY1
+    let intersectionX = line1.startingPoint.x + line1DirectionVectorParameter * (line1.endingPoint.x - line1.startingPoint.x)
+    let intersectionY = line1.startingPoint.y + line1DirectionVectorParameter * (line1.endingPoint.y - line1.startingPoint.y)
 
     return createPoint(intersectionX, intersectionY)
 }
