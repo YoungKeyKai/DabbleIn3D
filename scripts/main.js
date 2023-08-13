@@ -78,16 +78,10 @@ let intersectionPointOfLines = (line1, line2) => {
 
 class Canvas {
     constructor(canvasSelector) {
-        if (Canvas._instance !== undefined) {
-            return Canvas._instance
-        }
-
         this.canvas = document.querySelector(canvasSelector)
         this.context = this.canvas.getContext('2d')
         this.width = this.canvas.width
         this.height = this.canvas.height
-
-        Canvas._instance = this
     }
     
     drawRectangle(rectangle, fill=true, colour='white') {
