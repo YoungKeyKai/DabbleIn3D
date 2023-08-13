@@ -92,19 +92,22 @@ class Canvas {
         this.context.fillStyle = colour
         this.context.strokeStyle = colour
 
+        let width = rectangle.bottomRightPoint.x - rectangle.topLeftPoint.x
+        let height = rectangle.bottomRightPoint.y - rectangle.topLeftPoint.y
+
         if (fill) {
             this.context.fillRect(
                 rectangle.topLeftPoint.x,
                 rectangle.topLeftPoint.y,
-                rectangle.bottomRightPoint.x,
-                rectangle.bottomRightPoint.y
+                width,
+                height
             )
         } else {
             this.context.strokeRect(
                 rectangle.topLeftPoint.x,
                 rectangle.topLeftPoint.y,
-                rectangle.bottomRightPoint.x,
-                rectangle.bottomRightPoint.y
+                width,
+                height
             )
         }
     }
