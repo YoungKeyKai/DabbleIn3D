@@ -5,6 +5,8 @@ let metersToPixels = (distanceInMeters) => distanceInMeters * pixelsPerMeter
 let degreeToRadian = (degrees) => degrees * Math.PI / 180
 let radianToDegree = (radians) => radians * 180 / Math.PI
 
+let createGrayscaleRGBColour = (value) => `rgb(${value}, ${value}, ${value})`
+
 let createPoint = (x, y) => {
     return {x, y}
 }
@@ -156,7 +158,7 @@ class Raycast {
         this.canvas2D = new Canvas(selector2D)
         this.canvas3D = new Canvas(selector3D)
 
-        this.viewPortWidth3D = Math.max(this.canvas3D.height, this.canvas3D.width)
+        this.viewPortWidth3DPixels = Math.max(this.canvas3D.height, this.canvas3D.width)
 
         this.facingDirectionDegrees = 0
         this.fovAngleDegrees = 100
@@ -293,8 +295,54 @@ class Raycast {
         this.walls.forEach((wall) => this.canvas2D.drawLine(wall))
     }
 
+    draw3DSliceBasedOnRays() {
+        let canvas3DMidPointY = this.canvas3D.height / 2
+        let widthOfPerRayViewPortSlice = this.viewPortWidth3DPixels / this.rayCount
+
+        let currentRaySliceStartingX = 0
+        this.rayEndPoints.forEach((endPoint) => {
+            if (!endPoint.hasHitWall) {
+                currentRaySliceStartingX += widthOfPerRayViewPortSlice
+                return
+            }
+
+            let rayDistanceToWallMeter = pixelsToMeters(lengthOfLineInPixels(createLine(this.playerPosition, endPoint.point)))
+            let darknessValue = 255 * (1 - rayDistanceToWallMeter / this.rayMaxDistanceMeters)
+
+            let halfOfFOVMaxMeters = Math.tan(degreeToRadian(this.fovAngleDegrees) / 2) * rayDistanceToWallMeter
+
+            let upperHalfOfWallMeters = this.heightOfWallsMeters - this.playerEyeLevelHeightMeters
+            let upperHalfFOVCoverRatio = upperHalfOfWallMeters / halfOfFOVMaxMeters
+            let upperHalfOfWallRelativeToViewPortPixels = this.viewPortWidth3DPixels * upperHalfFOVCoverRatio
+
+            this.canvas3D.drawRectangle(
+                createRectangle(
+                    createPoint(currentRaySliceStartingX, canvas3DMidPointY - upperHalfOfWallRelativeToViewPortPixels),
+                    createPoint(currentRaySliceStartingX + widthOfPerRayViewPortSlice, canvas3DMidPointY)
+                ),
+                true,
+                createGrayscaleRGBColour(darknessValue)
+            )
+
+            let lowerHalfFOVCoverRatio = this.playerEyeLevelHeightMeters / halfOfFOVMaxMeters
+            let lowerHalfOfWallRelativeToViewPortPixels = this.viewPortWidth3DPixels * lowerHalfFOVCoverRatio
+
+            this.canvas3D.drawRectangle(
+                createRectangle(
+                    createPoint(currentRaySliceStartingX, canvas3DMidPointY),
+                    createPoint(currentRaySliceStartingX + widthOfPerRayViewPortSlice, canvas3DMidPointY + lowerHalfOfWallRelativeToViewPortPixels)
+                ),
+                true,
+                createGrayscaleRGBColour(darknessValue)
+            )
+
+            currentRaySliceStartingX += widthOfPerRayViewPortSlice
+        })
+    }
+
     draw3DVisuals() {
         this.canvas3D.fillCanvas()
+        this.draw3DSliceBasedOnRays()
     }
 
     update() {
