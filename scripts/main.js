@@ -1,3 +1,7 @@
+let pixelsPerMeter = 10
+let pixelsToMeters = (distanceInPixels) => distanceInPixels / pixelsPerMeter
+let metersToPixels = (distanceInMeters) => distanceInMeters * pixelsPerMeter
+
 let degreeToRadian = (degrees) => degrees * Math.PI / 180
 let radianToDegree = (radians) => radians * 180 / Math.PI
 
@@ -9,7 +13,7 @@ let createLine = (startingPoint, endingPoint) => {
     return {startingPoint, endingPoint}
 }
 
-let lengthOfLine = (line) => Math.sqrt(
+let lengthOfLineInPixels = (line) => Math.sqrt(
     (line.endingPoint.x - line.startingPoint.x) ** 2 + (line.endingPoint.y - line.startingPoint.y) ** 2
 )
 
@@ -145,12 +149,16 @@ class Raycast {
         this.canvas2D = new Canvas(selector2D)
         this.canvas3D = new Canvas(selector3D)
 
+        this.viewPortWidth3D = Math.max(this.canvas3D.height, this.canvas3D.width)
+
         this.facingDirectionDegrees = 0
         this.fovAngleDegrees = 100
-        this.rayMaxDistance = 100
+        this.rayMaxDistanceMeters = 10
         this.rayCount = 50
-        this.playerStepSize = 2
-        this.playerTurnRate = 5
+        this.playerStepSizeMeters = 0.5
+        this.playerTurnRateDegrees = 5
+
+        this.playerEyeLevelHeightMeters = 1.8
 
         this.playerPosition = createPoint(this.canvas2D.width / 2, this.canvas2D.height / 2)
 
@@ -185,18 +193,19 @@ class Raycast {
         }
 
         if ('wasd'.includes(event.key)) {
+            let playerStepSizePixels = metersToPixels(this.playerStepSizeMeters)
             switch(event.key) {
                 case 'w':
-                    this.playerPosition.y -= this.playerStepSize
+                    this.playerPosition.y -= playerStepSizePixels
                     break
                 case 'a':
-                    this.playerPosition.x -= this.playerStepSize
+                    this.playerPosition.x -= playerStepSizePixels
                     break
                 case 's':
-                    this.playerPosition.y += this.playerStepSize
+                    this.playerPosition.y += playerStepSizePixels
                     break
                 case 'd':
-                    this.playerPosition.x += this.playerStepSize
+                    this.playerPosition.x += playerStepSizePixels
                     break
                 default:
                     break
@@ -218,10 +227,10 @@ class Raycast {
         else {
             switch(event.key) {
                 case 'q':
-                    this.facingDirectionDegrees -= this.playerTurnRate
+                    this.facingDirectionDegrees -= this.playerTurnRateDegrees
                     break
                 case 'e':
-                    this.facingDirectionDegrees += this.playerTurnRate
+                    this.facingDirectionDegrees += this.playerTurnRateDegrees
                     break
                 default:
                     break
@@ -238,11 +247,12 @@ class Raycast {
         
         for (let rayIndex = 0; rayIndex < this.rayCount; rayIndex++) {
             let rayAngleInRadians = degreeToRadian(startingFOVAngle + rayIndex * angleStep)
-            let maximumDeltaX = this.rayMaxDistance * Math.cos(rayAngleInRadians)
-            let maximumDeltaY = this.rayMaxDistance * Math.sin(rayAngleInRadians)
+            let rayMaxDistancePixels = metersToPixels(this.rayMaxDistanceMeters)
+            let maximumDeltaX = rayMaxDistancePixels * Math.cos(rayAngleInRadians)
+            let maximumDeltaY = rayMaxDistancePixels * Math.sin(rayAngleInRadians)
 
             let shortestRayEndPoint = createPoint(this.playerPosition.x + maximumDeltaX, this.playerPosition.y + maximumDeltaY)
-            let shortestRayLength = this.rayMaxDistance
+            let shortestRayLengthPixels = rayMaxDistancePixels
 
             for (let wallIndex = 0; wallIndex < this.walls.length; wallIndex++) {
                 let rayLine = createLine(this.playerPosition, shortestRayEndPoint)
@@ -252,12 +262,12 @@ class Raycast {
                     continue
                 }
 
-                let rayToIntersectionLength = lengthOfLine(createLine(this.playerPosition, intersectionPointBetweenRayAndWall))
-                if (rayToIntersectionLength < shortestRayLength) {
+                let rayToIntersectionLengthPixels = lengthOfLineInPixels(createLine(this.playerPosition, intersectionPointBetweenRayAndWall))
+                if (rayToIntersectionLengthPixels < shortestRayLengthPixels) {
                     shortestRayEndPoint = intersectionPointBetweenRayAndWall
-                    shortestRayLength = rayToIntersectionLength
+                    shortestRayLengthPixels = rayToIntersectionLengthPixels
                 }
-                if (rayToIntersectionLength === 0) {
+                if (rayToIntersectionLengthPixels === 0) {
                     break
                 }
             }
