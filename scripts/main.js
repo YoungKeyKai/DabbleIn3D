@@ -9,6 +9,10 @@ let createPoint = (x, y) => {
     return {x, y}
 }
 
+let createRayEndPoint = (point, hasHitWall) => {
+    return {point, hasHitWall}
+}
+
 let createLine = (startingPoint, endingPoint) => {
     return {startingPoint, endingPoint}
 }
@@ -256,6 +260,7 @@ class Raycast {
 
             let shortestRayEndPoint = createPoint(this.playerPosition.x + maximumDeltaX, this.playerPosition.y + maximumDeltaY)
             let shortestRayLengthPixels = rayMaxDistancePixels
+            let hasHitWall = false
 
             for (let wallIndex = 0; wallIndex < this.walls.length; wallIndex++) {
                 let rayLine = createLine(this.playerPosition, shortestRayEndPoint)
@@ -269,20 +274,21 @@ class Raycast {
                 if (rayToIntersectionLengthPixels < shortestRayLengthPixels) {
                     shortestRayEndPoint = intersectionPointBetweenRayAndWall
                     shortestRayLengthPixels = rayToIntersectionLengthPixels
+                    hasHitWall = true
                 }
                 if (rayToIntersectionLengthPixels === 0) {
                     break
                 }
             }
 
-            this.rayEndPoints[rayIndex] = shortestRayEndPoint
+            this.rayEndPoints[rayIndex] = createRayEndPoint(shortestRayEndPoint, hasHitWall)
         }
     }
     
     draw2DVisuals() {
         this.canvas2D.fillCanvas()
         this.canvas2D.drawCircle(createCircle(this.playerPosition, 2))
-        this.rayEndPoints.forEach((rayEndPoint) => this.canvas2D.drawLine(createLine(this.playerPosition, rayEndPoint)))
+        this.rayEndPoints.forEach((rayEndPoint) => this.canvas2D.drawLine(createLine(this.playerPosition, rayEndPoint.point)))
         this.walls.forEach((wall) => this.canvas2D.drawLine(wall))
     }
 
