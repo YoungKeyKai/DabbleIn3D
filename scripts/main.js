@@ -140,9 +140,10 @@ class Canvas {
     }
 }
 
-class Raycast2D {
-    constructor(canvasSelector) {
-        this.canvas = new Canvas(canvasSelector)
+class Raycast {
+    constructor(selector2D, selector3D) {
+        this.canvas2D = new Canvas(selector2D)
+        this.canvas3D = new Canvas(selector3D)
 
         this.facingDirectionDegrees = 0
         this.fovAngleDegrees = 100
@@ -151,58 +152,16 @@ class Raycast2D {
         this.playerStepSize = 2
         this.playerTurnRate = 5
 
-        this.playerPosition = createPoint(this.canvas.width / 2, this.canvas.height / 2)
+        this.playerPosition = createPoint(this.canvas2D.width / 2, this.canvas2D.height / 2)
 
         this.walls = [createLine(createPoint(270, 100), createPoint(400, 250)),]
         this.wallStartCoordinate = undefined
 
         this.rayEndPoints = new Array(this.rayCount).fill(0)
-        this.updateRays()
-        this.drawVisuals()
-        
-        this.canvas.addEventListener("keydown", (event) => {this.movePlayer(event)});
-        this.canvas.addEventListener("mousedown", (event) => {this.addWall(event)})
-    }
+        this.update()
 
-    updateRays() {
-        let startingFOVAngle = this.facingDirectionDegrees - this.fovAngleDegrees / 2
-        let angleStep = this.fovAngleDegrees / this.rayCount
-        
-        for (let rayIndex = 0; rayIndex < this.rayCount; rayIndex++) {
-            let rayAngleInRadians = degreeToRadian(startingFOVAngle + rayIndex * angleStep)
-            let maximumDeltaX = this.rayMaxDistance * Math.cos(rayAngleInRadians)
-            let maximumDeltaY = this.rayMaxDistance * Math.sin(rayAngleInRadians)
-
-            let shortestRayEndPoint = createPoint(this.playerPosition.x + maximumDeltaX, this.playerPosition.y + maximumDeltaY)
-            let shortestRayLength = this.rayMaxDistance
-
-            for (let wallIndex = 0; wallIndex < this.walls.length; wallIndex++) {
-                let rayLine = createLine(this.playerPosition, shortestRayEndPoint)
-                let intersectionPointBetweenRayAndWall = intersectionPointOfLines(rayLine, this.walls[wallIndex])
-
-                if (!intersectionPointBetweenRayAndWall) {
-                    continue
-                }
-
-                let rayToIntersectionLength = lengthOfLine(createLine(this.playerPosition, intersectionPointBetweenRayAndWall))
-                if (rayToIntersectionLength < shortestRayLength) {
-                    shortestRayEndPoint = intersectionPointBetweenRayAndWall
-                    shortestRayLength = rayToIntersectionLength
-                }
-                if (rayToIntersectionLength === 0) {
-                    break
-                }
-            }
-
-            this.rayEndPoints[rayIndex] = shortestRayEndPoint
-        }
-    }
-    
-    drawVisuals() {
-        this.canvas.fillCanvas()
-        this.canvas.drawCircle(createCircle(this.playerPosition, 2))
-        this.rayEndPoints.forEach((rayEndPoint) => this.canvas.drawLine(createLine(this.playerPosition, rayEndPoint)))
-        this.walls.forEach((wall) => this.canvas.drawLine(wall))
+        this.canvas2D.addEventListener("keydown", (event) => {this.movePlayer(event)});
+        this.canvas2D.addEventListener("mousedown", (event) => {this.addWall(event)})
     }
 
     addWall(event) {
@@ -245,14 +204,14 @@ class Raycast2D {
 
             if (this.playerPosition.x < 0) {
                 this.playerPosition.x = 0
-            } else if (this.playerPosition.x > this.canvas.width) {
-                this.playerPosition.x = this.canvas.width
+            } else if (this.playerPosition.x > this.canvas2D.width) {
+                this.playerPosition.x = this.canvas2D.width
             }
 
             if (this.playerPosition.y < 0) {
                 this.playerPosition.y = 0
-            } else if (this.playerPosition.y > this.canvas.height) {
-                this.playerPosition.y = this.canvas.height
+            } else if (this.playerPosition.y > this.canvas2D.height) {
+                this.playerPosition.y = this.canvas2D.height
             }
         }
         
@@ -273,10 +232,56 @@ class Raycast2D {
         this.update()
     }
 
+    updateRays() {
+        let startingFOVAngle = this.facingDirectionDegrees - this.fovAngleDegrees / 2
+        let angleStep = this.fovAngleDegrees / this.rayCount
+        
+        for (let rayIndex = 0; rayIndex < this.rayCount; rayIndex++) {
+            let rayAngleInRadians = degreeToRadian(startingFOVAngle + rayIndex * angleStep)
+            let maximumDeltaX = this.rayMaxDistance * Math.cos(rayAngleInRadians)
+            let maximumDeltaY = this.rayMaxDistance * Math.sin(rayAngleInRadians)
+
+            let shortestRayEndPoint = createPoint(this.playerPosition.x + maximumDeltaX, this.playerPosition.y + maximumDeltaY)
+            let shortestRayLength = this.rayMaxDistance
+
+            for (let wallIndex = 0; wallIndex < this.walls.length; wallIndex++) {
+                let rayLine = createLine(this.playerPosition, shortestRayEndPoint)
+                let intersectionPointBetweenRayAndWall = intersectionPointOfLines(rayLine, this.walls[wallIndex])
+
+                if (!intersectionPointBetweenRayAndWall) {
+                    continue
+                }
+
+                let rayToIntersectionLength = lengthOfLine(createLine(this.playerPosition, intersectionPointBetweenRayAndWall))
+                if (rayToIntersectionLength < shortestRayLength) {
+                    shortestRayEndPoint = intersectionPointBetweenRayAndWall
+                    shortestRayLength = rayToIntersectionLength
+                }
+                if (rayToIntersectionLength === 0) {
+                    break
+                }
+            }
+
+            this.rayEndPoints[rayIndex] = shortestRayEndPoint
+        }
+    }
+    
+    draw2DVisuals() {
+        this.canvas2D.fillCanvas()
+        this.canvas2D.drawCircle(createCircle(this.playerPosition, 2))
+        this.rayEndPoints.forEach((rayEndPoint) => this.canvas2D.drawLine(createLine(this.playerPosition, rayEndPoint)))
+        this.walls.forEach((wall) => this.canvas2D.drawLine(wall))
+    }
+
+    draw3DVisuals() {
+        this.canvas3D.fillCanvas()
+    }
+
     update() {
         this.updateRays()
-        this.drawVisuals()
+        this.draw2DVisuals()
+        this.draw3DVisuals()
     }
 }
 
-const raycast2D = new Raycast2D('#canvas2d')
+const raycast = new Raycast('#canvas2d', '#canvas3d')
