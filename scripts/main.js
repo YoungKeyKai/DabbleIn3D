@@ -160,10 +160,11 @@ class Raycast {
 
         this.facingDirectionDegrees = 0
         this.fovAngleDegrees = 100
-        this.rayMaxDistanceMeters = 10
-        this.rayCount = 50
+        this.rayMaxDistanceMeters = 20
+        this.rayCount = 100
         this.playerStepSizeMeters = 0.5
         this.playerTurnRateDegrees = 5
+        this.heightOfWallsMeters = 5
 
         this.playerEyeLevelHeightMeters = 1.8
 
